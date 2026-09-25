@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
+import CookieBanner from '@/components/ui/CookieBanner';
 import { site } from '@/data/site';
 import { organizationJsonLd } from '@/lib/seo';
 
@@ -34,6 +36,12 @@ export const metadata: Metadata = {
   creator: site.name,
   publisher: site.name,
   alternates: { canonical: '/' },
+  // Verificação do Google Search Console. O código vem do painel, em
+  // Adicionar propriedade → Prefixo de URL → tag HTML, e entra como
+  // variável na Vercel. Sem ela a meta simplesmente não é emitida.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
@@ -108,6 +116,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main id="conteudo">{children}</main>
         <Footer />
+        {/* Só renderiza o GA depois do aceite — ver GoogleAnalytics.tsx */}
+        <GoogleAnalytics />
+        <CookieBanner />
       </body>
     </html>
   );

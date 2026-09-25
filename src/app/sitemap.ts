@@ -14,5 +14,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${site.url}/projetos/`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${site.url}/materiais/`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${site.url}/sobre/`, lastModified: now, changeFrequency: 'yearly', priority: 0.7 },
+    {
+      url: `${site.url}/privacidade/`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
   ];
 }

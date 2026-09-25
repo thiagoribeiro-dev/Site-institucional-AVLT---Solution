@@ -24,6 +24,40 @@ const nextConfig = {
   trailingSlash: true,
   reactStrictMode: true,
   transpilePackages: ['three'],
+
+  // Cabeçalhos de segurança. Não são fator de ranqueamento, mas entram em
+  // auditoria de qualidade e em due diligence de cliente enterprise — que
+  // é exatamente o público deste site.
+  //
+  // Deliberadamente SEM Content-Security-Policy: o site carrega o GA4 e
+  // usa estilo inline do Tailwind e do Framer Motion, então uma CSP mal
+  // calibrada quebraria a página em produção sem aviso. Fazer CSP direito
+  // é frente própria, com nonce e teste — não linha solta aqui.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Só HTTPS por dois anos, incluindo subdomínios.
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          // Impede o navegador de adivinhar o tipo de um arquivo.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Não vaza a URL completa ao sair do site.
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Ninguém embute o site em iframe (clickjacking).
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // Nenhuma API sensível é usada; negar por padrão.
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

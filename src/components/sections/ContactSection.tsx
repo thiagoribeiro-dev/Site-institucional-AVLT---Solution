@@ -6,6 +6,7 @@ import ContactForm from './ContactForm';
 import LazyScene from '@/components/3d/LazyScene';
 import { forms, formOrder, type FormKind } from '@/data/forms';
 import { site } from '@/data/site';
+import { registrar } from '@/lib/analytics';
 
 /**
  * Área de contato: dois canais no mesmo lugar.
@@ -84,6 +85,7 @@ export default function ContactSection() {
               <dd className="mt-1.5">
                 <a
                   href={`mailto:${config.destino}`}
+                  onClick={() => registrar({ nome: 'contato_direto', meio: 'email' })}
                   className="text-[0.9375rem] text-[var(--color-primary-soft)] underline underline-offset-4 transition-colors hover:text-[var(--color-text)]"
                 >
                   {config.destino}
@@ -97,6 +99,7 @@ export default function ContactSection() {
               <dd className="mt-1.5">
                 <a
                   href={`tel:${site.phoneHref}`}
+                  onClick={() => registrar({ nome: 'contato_direto', meio: 'telefone' })}
                   className="font-mono text-[0.9375rem] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text)]"
                 >
                   {site.phone}
@@ -110,6 +113,7 @@ export default function ContactSection() {
               <dd className="mt-1.5">
                 <a
                   href={site.instagram}
+                  onClick={() => registrar({ nome: 'contato_direto', meio: 'instagram' })}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-[0.9375rem] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text)]"

@@ -101,8 +101,19 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-[var(--color-border)] pt-8 text-[0.8125rem] text-[var(--color-text-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {year} {site.name}. Todos os direitos reservados.
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>
+              © {year} {site.name}. Todos os direitos reservados.
+            </span>
+            <span aria-hidden="true" className="text-[var(--color-border-strong)]">
+              ·
+            </span>
+            <Link
+              href="/privacidade"
+              className="underline underline-offset-4 transition-colors hover:text-[var(--color-text)]"
+            >
+              Política de privacidade
+            </Link>
           </p>
           <p className="max-w-xl text-[0.75rem] leading-relaxed">
             Salesforce, Agentforce, Data 360, Tableau, MuleSoft e Slack são marcas da

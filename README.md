@@ -349,6 +349,64 @@ Salesforce, Agentforce, Data 360, Tableau, MuleSoft e Slack são marcas da Sales
 
 ---
 
+---
+
+## Analytics, privacidade e Search Console
+
+Aprovado em 25/09/2026. O documento de aprovação registra as decisões; aqui está como elas viraram código.
+
+### Google Analytics 4 — carregado só após consentimento
+
+**A regra que não pode ser quebrada:** nada do Google carrega antes de o visitante aceitar. Não é preferência de implementação — carregar o GA e depois "respeitar" a recusa não vale sob a LGPD, porque o cookie já foi gravado e o IP já foi enviado.
+
+Por isso o script **não** está no HTML. Ele é injetado em runtime, e só no ramo do aceite:
+
+| Arquivo | Papel |
+|---|---|
+| `src/lib/consentimento.ts` | fonte única de "esta pessoa aceitou?"; grava no `localStorage` e avisa quem ouve |
+| `src/components/analytics/GoogleAnalytics.tsx` | só renderiza o `<Script>` quando o estado é `aceito` |
+| `src/components/ui/CookieBanner.tsx` | o aviso; **Recusar e Aceitar têm o mesmo peso visual**, de propósito |
+| `src/components/ui/RevogarConsentimento.tsx` | botão na política; apaga a escolha e os cookies `_ga` |
+| `src/lib/analytics.ts` | os quatro eventos; silencioso quando não há GA |
+
+Sem `NEXT_PUBLIC_GA_ID` **nada disso aparece** — nem script, nem banner. É assim que desenvolvimento e o preview do artifact ficam limpos, e é a chave a zerar para desligar o analytics sem mexer em código.
+
+Eventos: `formulario_enviado` (com canal), `formulario_erro` (com campo), `contato_direto` (e-mail/telefone/Instagram), `material_aberto`. **Nenhum carrega o que o visitante digitou** — só o fato de ter acontecido.
+
+### Política de privacidade
+
+Texto em `src/data/privacidade.ts`, página em `src/app/privacidade/page.tsx`. Retenção de **2 meses**, encarregado **Thiago Ribeiro Silva** (`contato@avlt-solution.com`).
+
+O texto descreve o que o site **faz**. Mudou o comportamento — outro destino, outro operador, outra ferramenta —, o texto muda no mesmo commit. A revisão semestral da rotina existe para conferir isso.
+
+Não passou por revisão jurídica.
+
+### Aceite no formulário
+
+Checkbox obrigatório, nunca pré-marcado, com link para a política. Sem ele o envio não sai — verificado em teste.
+
+### Search Console
+
+`NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` emite a meta de verificação. Sem a variável, a meta não é emitida. Depois de verificar, enviar `sitemap.xml` pelo painel.
+
+### Rotina de atualização
+
+| Quando | O quê | Responsável |
+|---|---|---|
+| Mensal | GA4 + Search Console: acessos, origem, formulários, erro de indexação | Andressa Chaves |
+| Trimestral | Revisar conteúdo: cases, contas anteriores, materiais, home | Andressa Chaves |
+| Trimestral | `npm outdated` e correções de segurança | Victor Cavalcante |
+| Semestral | Conferir a política contra o que o site faz | Thiago Ribeiro Silva |
+| Semestral | Cabeçalhos de segurança, domínio e deploys | Leandro Palma |
+| Anual | Renovação de `avltsolution.tech` | Leandro Palma |
+| Sob demanda | Case novo autorizado entra em `projects.ts` | Andressa Chaves |
+
+As tarefas vivem na org Salesforce da AVLT.
+
+### Cabeçalhos de segurança
+
+Em `next.config.mjs`: HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options` e `Permissions-Policy`. **Deliberadamente sem Content-Security-Policy** — o site carrega o GA4 e usa estilo inline do Tailwind e do Framer Motion, e uma CSP mal calibrada quebraria a página em produção sem aviso. CSP feita direito é frente própria.
+
 ## Checklist antes de publicar
 
 - [ ] E-mail e telefone conferidos em `src/data/site.ts`
@@ -362,3 +420,9 @@ Salesforce, Agentforce, Data 360, Tableau, MuleSoft e Slack são marcas da Sales
 - [ ] `RESEND_API_KEY` definida na Vercel
 - [ ] Teste do SAC com o e-mail chegando em `contato@`
 - [ ] Teste do comercial com o Lead aparecendo na org, e o alerta da org chegando a quem precisa
+- [ ] `NEXT_PUBLIC_GA_ID` na Vercel e evento aparecendo no GA4 em tempo real
+- [ ] Verificado no navegador: nenhum cookie `_ga` antes do aceite
+- [ ] `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` definida e propriedade verificada
+- [ ] `sitemap.xml` enviado no Search Console
+- [ ] Política revisada por alguém com formação jurídica
+- [ ] Tarefas da rotina criadas na org, com responsável e primeira data

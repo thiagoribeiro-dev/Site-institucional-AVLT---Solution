@@ -2,7 +2,9 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import Link from 'next/link';
 import Field from '@/components/ui/Field';
+import { registrar } from '@/lib/analytics';
 import { FORM_ENDPOINT, type FormConfig } from '@/data/forms';
 import { enviarWebToLead } from '@/lib/webToLead';
 import {
@@ -49,6 +51,8 @@ export default function ContactForm({ config }: { config: FormConfig }) {
     descricao: false,
   });
   const [tentouEnviar, setTentouEnviar] = useState(false);
+  /** Aceite da LGPD. Começa falso e nunca é pré-marcado. */
+  const [aceite, setAceite] = useState(false);
   const [estado, setEstado] = useState<Estado>('editando');
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const reduced = useReducedMotion();
@@ -104,10 +108,19 @@ export default function ContactForm({ config }: { config: FormConfig }) {
       return;
     }
 
+    if (!aceite) {
+      registrar({ nome: 'formulario_erro', canal: config.id, campo: 'aceite' });
+      document.getElementById(`${config.id}-aceite`)?.focus();
+      return;
+    }
+
     if (temErro) {
       // Leva o foco ao primeiro campo com problema.
       const primeiro = (Object.keys(erros) as (keyof Campos)[]).find((k) => erros[k]);
-      if (primeiro) document.getElementById(`${config.id}-${primeiro}`)?.focus();
+      if (primeiro) {
+        registrar({ nome: 'formulario_erro', canal: config.id, campo: primeiro });
+        document.getElementById(`${config.id}-${primeiro}`)?.focus();
+      }
       return;
     }
 
@@ -129,6 +142,7 @@ export default function ContactForm({ config }: { config: FormConfig }) {
           },
           config.entrega.salesforce,
         );
+        registrar({ nome: 'formulario_enviado', canal: config.id });
         setEstado('enviado');
       } catch {
         setEstado('erro');
@@ -148,6 +162,7 @@ export default function ContactForm({ config }: { config: FormConfig }) {
         `?subject=${encodeURIComponent(`${config.assunto} — ${campos.empresa.trim()}`)}` +
         `&body=${encodeURIComponent(corpoDoEmail())}`;
       window.location.href = url;
+      registrar({ nome: 'formulario_enviado', canal: config.id });
       setEstado('enviado');
       return;
     }
@@ -172,6 +187,7 @@ export default function ContactForm({ config }: { config: FormConfig }) {
       });
 
       if (resposta.ok) {
+        registrar({ nome: 'formulario_enviado', canal: config.id });
         setEstado('enviado');
         return;
       }
@@ -212,6 +228,7 @@ export default function ContactForm({ config }: { config: FormConfig }) {
     setCampos(VAZIO);
     setTocado({ nome: false, empresa: false, email: false, telefone: false, descricao: false });
     setTentouEnviar(false);
+    setAceite(false);
     setEstado('editando');
   }
 
@@ -381,7 +398,46 @@ export default function ContactForm({ config }: { config: FormConfig }) {
         )}
       </AnimatePresence>
 
-      <div className="mt-8 flex flex-col gap-4 border-t border-[var(--color-border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
+      {/* Aceite da LGPD. Obrigatório, sem pré-marcação: consentimento
+          precisa ser ato do visitante. O envio fica bloqueado sem ele. */}
+      <div className="mt-8 border-t border-[var(--color-border)] pt-7">
+        <label
+          htmlFor={`${config.id}-aceite`}
+          className="flex cursor-pointer items-start gap-3 text-[0.8125rem] leading-relaxed text-[var(--color-text-secondary)]"
+        >
+          <input
+            id={`${config.id}-aceite`}
+            type="checkbox"
+            checked={aceite}
+            onChange={(e) => setAceite(e.target.checked)}
+            aria-describedby={tentouEnviar && !aceite ? `${config.id}-aceite-erro` : undefined}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[var(--color-secondary)]"
+          />
+          <span>
+            Concordo que a AVLT - Solution use estes dados para responder este contato, conforme a{' '}
+            <Link
+              href="/privacidade"
+              target="_blank"
+              className="text-[var(--color-primary-soft)] underline underline-offset-4"
+            >
+              política de privacidade
+            </Link>
+            . <span className="text-[var(--color-accent)]">*</span>
+          </span>
+        </label>
+
+        {tentouEnviar && !aceite && (
+          <p
+            id={`${config.id}-aceite-erro`}
+            role="alert"
+            className="mt-2.5 pl-7 text-[0.8125rem] text-[var(--color-accent)]"
+          >
+            Precisamos do seu aceite para poder responder.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[0.75rem] leading-relaxed text-[var(--color-text-muted)]">
           Campos com <span className="text-[var(--color-accent)]">*</span> são obrigatórios. Usamos
           seus dados só para responder este contato.
