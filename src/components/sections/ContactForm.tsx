@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Field from '@/components/ui/Field';
 import { FORM_ENDPOINT, type FormConfig } from '@/data/forms';
+import { enviarWebToLead } from '@/lib/webToLead';
 import {
   mascaraEmail,
   mascaraTelefone,
@@ -112,6 +113,33 @@ export default function ContactForm({ config }: { config: FormConfig }) {
 
     setEstado('enviando');
     setErroEnvio(null);
+
+    // Canal de Web-to-Lead: o contato vira Lead direto na org Salesforce.
+    // O envio é cego por limitação de CORS do endpoint da Salesforce — o
+    // porquê e o que isso custa estão no topo de src/lib/webToLead.ts.
+    if (config.entrega.tipo === 'webToLead') {
+      try {
+        await enviarWebToLead(
+          {
+            nome: campos.nome,
+            empresa: campos.empresa,
+            email: campos.email,
+            telefone: campos.telefone,
+            descricao: campos.descricao,
+          },
+          config.entrega.salesforce,
+        );
+        setEstado('enviado');
+      } catch {
+        setEstado('erro');
+        setErroEnvio(
+          'Não conseguimos enviar agora. Tente de novo em instantes ou escreva direto para ' +
+            config.destino +
+            '.',
+        );
+      }
+      return;
+    }
 
     // Sem endpoint: abre o cliente de e-mail do visitante já preenchido.
     if (!FORM_ENDPOINT) {

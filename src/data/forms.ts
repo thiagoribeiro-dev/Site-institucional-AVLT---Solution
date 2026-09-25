@@ -1,22 +1,31 @@
 /**
  * Configuração dos formulários de contato.
  *
- * ┌─ COMO O ENVIO FUNCIONA ──────────────────────────────────────────────┐
- * │ O formulário faz POST em `FORM_ENDPOINT`. Hoje isso aponta para a    │
- * │ função própria do projeto, em src/app/api/contato/route.ts, que      │
- * │ revalida tudo no servidor e envia pelo Resend.                       │
+ * ┌─ CADA CANAL ENTREGA NUM LUGAR ───────────────────────────────────────┐
+ * │ "Seja nosso cliente" → Web-to-Lead: o contato nasce como Lead na     │
+ * │   org Salesforce da AVLT. Quem avisa a equipe por e-mail é a própria │
+ * │   org (regra de resposta automática, alerta de fluxo ou regra de     │
+ * │   atribuição) — o site não manda e-mail nenhum nesse canal.          │
  * │                                                                       │
- * │ O que precisa estar configurado na Vercel está documentado no        │
- * │ cabeçalho daquele arquivo e no README (seção "Formulários").         │
+ * │ "SAC" → a função própria do projeto (src/app/api/contato/route.ts),  │
+ * │   que revalida no servidor e envia por e-mail pelo Resend.           │
  * │                                                                       │
- * │ Deixar `FORM_ENDPOINT` VAZIO volta ao comportamento anterior: o      │
- * │ formulário valida e abre o cliente de e-mail do visitante já         │
- * │ preenchido. Serve como plano B se o envio precisar ser desligado     │
- * │ às pressas, sem derrubar o formulário.                               │
+ * │ Os dois formulários são o MESMO componente, com os mesmos campos,    │
+ * │ máscaras, validação e tela de sucesso. Muda só o destino.            │
+ * │                                                                       │
+ * │ Ver src/lib/webToLead.ts para o que o envio ao Salesforce consegue e │
+ * │ o que não consegue confirmar.                                        │
  * └───────────────────────────────────────────────────────────────────────┘
  */
 
+import type { ConfigWebToLead } from '@/lib/webToLead';
+
 export type FormKind = 'comercial' | 'sac';
+
+/** Para onde vão os dados deste canal. */
+export type Entrega =
+  | { tipo: 'webToLead'; salesforce: ConfigWebToLead }
+  | { tipo: 'email' };
 
 export type FormConfig = {
   id: FormKind;
@@ -24,9 +33,12 @@ export type FormConfig = {
   tab: string;
   title: string;
   subtitle: string;
-  /** Caixa que recebe os dados. */
+  /**
+   * Caixa mostrada como alternativa ("prefere escrever direto?") e usada no
+   * fallback de mailto. No canal de Web-to-Lead ela NÃO recebe o formulário.
+   */
   destino: string;
-  /** Assunto do e-mail gerado. */
+  /** Assunto do e-mail gerado — só no canal de e-mail. */
   assunto: string;
   /** Texto de ajuda do campo de descrição. */
   descricaoLabel: string;
@@ -36,6 +48,7 @@ export type FormConfig = {
   /** Mensagem de sucesso. */
   sucesso: string;
   accent: 'secondary' | 'primary';
+  entrega: Entrega;
 };
 
 /**
@@ -67,6 +80,21 @@ export const forms: Record<FormKind, FormConfig> = {
     sucesso:
       'Recebemos seu contato. Um dos sócios responde em até um dia útil.',
     accent: 'secondary',
+    entrega: {
+      tipo: 'webToLead',
+      salesforce: {
+        // Org ID da AVLT. Não é credencial: todo formulário Web-to-Lead
+        // publicado expõe o seu no HTML. O que protege a org é o Salesforce
+        // só aceitar criação de Lead por este endpoint, nada mais.
+        oid: '00Das00000GcncpEAB',
+        leadSource: 'Site AVLT',
+        status: 'Open',
+        // Só tem efeito num POST nativo de <form>, que navegaria para cá.
+        // O envio deste site é por fetch e não sai da página — deixado
+        // preenchido para o caso de alguém trocar o método depois.
+        retURL: 'https://www.avlt-solution.com/obrigado',
+      },
+    },
   },
   sac: {
     id: 'sac',
@@ -83,6 +111,7 @@ export const forms: Record<FormKind, FormConfig> = {
     sucesso:
       'Recebemos sua mensagem. O time de atendimento responde em até um dia útil.',
     accent: 'primary',
+    entrega: { tipo: 'email' },
   },
 };
 

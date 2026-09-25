@@ -1,6 +1,6 @@
 import SectionTitle from '@/components/ui/SectionTitle';
 import ScrollReveal from '@/components/ui/ScrollReveal';
-import { priorAccounts, priorExperience } from '@/data/experience';
+import { accountsOf, partners, priorExperience, type PriorAccount } from '@/data/experience';
 
 /**
  * De onde vem nossa arquitetura.
@@ -9,13 +9,87 @@ import { priorAccounts, priorExperience } from '@/data/experience';
  * A separação visual é intencional: fundo mais escuro, rótulo de
  * atribuição em cada card e nota ao final. O leitor precisa entender
  * de imediato que isto é bagagem dos sócios, não carteira da consultoria.
+ *
+ * Os cards são agrupados por sócio. Com a lista grande, o cabeçalho de
+ * grupo é o que permite ler a seção sem precisar conferir a atribuição
+ * card a card — a atribuição continua em cada um, para quem chega
+ * direto por um link ou lê fora de ordem.
  */
 
-const accentRgb: Record<(typeof priorAccounts)[number]['accent'], string> = {
+const accentRgb: Record<PriorAccount['accent'], string> = {
   primary: '0,161,224',
   secondary: '122,92,250',
   accent: '255,122,0',
 };
+
+function ContaCard({ conta, delay }: { conta: PriorAccount; delay: number }) {
+  const rgb = accentRgb[conta.accent];
+
+  return (
+    <ScrollReveal delay={delay}>
+      <article
+        className="group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border p-8 transition-all duration-500 md:p-9"
+        style={{
+          borderColor: `rgba(${rgb},0.22)`,
+          background: `linear-gradient(160deg, rgba(${rgb},0.06), rgba(255,255,255,0.02))`,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+          style={{ background: `linear-gradient(90deg, transparent, rgba(${rgb},0.9), transparent)` }}
+        />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className="rounded-full border px-3 py-1 font-mono text-[0.6875rem] uppercase tracking-[0.12em]"
+            style={{ borderColor: `rgba(${rgb},0.35)`, color: `rgba(${rgb},1)` }}
+          >
+            {conta.role}
+          </span>
+        </div>
+
+        <h3 className="mt-6 font-display text-[clamp(1.5rem,2.6vw,1.875rem)] font-bold leading-tight text-[var(--color-text)]">
+          {conta.client}
+        </h3>
+
+        {/* Nem todo card traz descrição do cliente — ver PriorAccount.about. */}
+        {conta.about && (
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-[var(--color-text-secondary)]">
+            {conta.about}
+          </p>
+        )}
+
+        <dl
+          className={`space-y-6 border-t border-[var(--color-border)] pt-7 ${
+            conta.about ? 'mt-7' : 'mt-6'
+          }`}
+        >
+          <div>
+            <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-[var(--color-accent)]">
+              Cenário
+            </dt>
+            <dd className="mt-2.5 text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
+              {conta.scenario}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-[var(--color-primary-soft)]">
+              Entrega
+            </dt>
+            <dd className="mt-2.5 text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
+              {conta.delivery}
+            </dd>
+          </div>
+        </dl>
+
+        <p className="mt-auto pt-7 font-mono text-[0.75rem] leading-snug text-[var(--color-text-muted)]">
+          {partners.find((s) => s.id === conta.partnerId)?.attribution}
+        </p>
+      </article>
+    </ScrollReveal>
+  );
+}
 
 export default function PriorExperience() {
   return (
@@ -40,71 +114,33 @@ export default function PriorExperience() {
           subtitle={priorExperience.subtitle}
         />
 
-        <div className="mt-14 grid gap-5 lg:grid-cols-2">
-          {priorAccounts.map((conta, i) => (
-            <ScrollReveal key={conta.id} delay={i * 0.08}>
-              <article
-                className="group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border p-8 transition-all duration-500 md:p-9"
-                style={{
-                  borderColor: `rgba(${accentRgb[conta.accent]},0.22)`,
-                  background: `linear-gradient(160deg, rgba(${accentRgb[conta.accent]},0.06), rgba(255,255,255,0.02))`,
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-60 transition-opacity duration-500 group-hover:opacity-100"
-                  style={{
-                    background: `linear-gradient(90deg, transparent, rgba(${accentRgb[conta.accent]},0.9), transparent)`,
-                  }}
-                />
+        {partners.map((socio) => {
+          const contas = accountsOf(socio.id);
+          if (contas.length === 0) return null;
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <span
-                    className="rounded-full border px-3 py-1 font-mono text-[0.6875rem] uppercase tracking-[0.12em]"
-                    style={{
-                      borderColor: `rgba(${accentRgb[conta.accent]},0.35)`,
-                      color: `rgba(${accentRgb[conta.accent]},1)`,
-                    }}
-                  >
-                    {conta.role}
+          return (
+            <div key={socio.id} className="mt-14">
+              <ScrollReveal>
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-[var(--color-border)] pb-4">
+                  <h3 className="font-display text-[1.25rem] font-bold leading-tight text-[var(--color-text)]">
+                    {socio.name}
+                  </h3>
+                  <span className="font-mono text-[0.75rem] uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                    {socio.context}
                   </span>
                 </div>
+              </ScrollReveal>
 
-                <h3 className="mt-6 font-display text-[clamp(1.5rem,2.6vw,1.875rem)] font-bold leading-tight text-[var(--color-text)]">
-                  {conta.client}
-                </h3>
-                <p className="mt-3 text-[0.9375rem] leading-relaxed text-[var(--color-text-secondary)]">
-                  {conta.about}
-                </p>
+              <div className="mt-8 grid gap-5 lg:grid-cols-2">
+                {contas.map((conta, i) => (
+                  <ContaCard key={conta.id} conta={conta} delay={(i % 2) * 0.08} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
-                <dl className="mt-7 space-y-6 border-t border-[var(--color-border)] pt-7">
-                  <div>
-                    <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-[var(--color-accent)]">
-                      Cenário
-                    </dt>
-                    <dd className="mt-2.5 text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
-                      {conta.scenario}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-[var(--color-primary-soft)]">
-                      Entrega
-                    </dt>
-                    <dd className="mt-2.5 text-[0.875rem] leading-relaxed text-[var(--color-text-secondary)]">
-                      {conta.delivery}
-                    </dd>
-                  </div>
-                </dl>
-
-                <p className="mt-auto pt-7 font-mono text-[0.75rem] leading-snug text-[var(--color-text-muted)]">
-                  {conta.attribution}
-                </p>
-              </article>
-            </ScrollReveal>
-          ))}
-        </div>
-
-        <ScrollReveal delay={0.12} className="mt-8">
+        <ScrollReveal delay={0.12} className="mt-10">
           <p className="max-w-3xl text-[0.8125rem] leading-relaxed text-[var(--color-text-muted)]">
             {priorExperience.note}
           </p>
