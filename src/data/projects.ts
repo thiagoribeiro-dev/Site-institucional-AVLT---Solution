@@ -60,24 +60,6 @@ export const projects: Project[] = [
     ],
   },
   {
-    slug: 'lahuman-sales-cloud',
-    client: 'Lahuman',
-    title: 'CRM comercial do zero',
-    category: 'Sales Cloud · Discovery',
-    summary:
-      'Desenho do processo comercial ponta a ponta em Salesforce, do primeiro contato ao pedido, para uma operação que nunca teve CRM.',
-    context:
-      'Indústria de plásticos e fios técnicos, 50 anos de mercado, 400 colaboradores e 60 representantes na ponta comercial.',
-    challenge:
-      'A cotação nascia no Excel, circulava por e-mail e WhatsApp e só virava pedido quando alguém digitava no ERP. Sessenta representantes, nenhuma fonte única de verdade e o número do mês só aparecendo no fechamento.',
-    technologies: [
-      'Salesforce Sales Cloud',
-      'Discovery & Arquitetura',
-      'Modelo de dados comercial',
-      'Integração com ERP',
-    ],
-  },
-  {
     slug: 'agentforce-zendesk',
     client: 'Agentforce × Zendesk',
     title: 'IA no atendimento omnichannel',

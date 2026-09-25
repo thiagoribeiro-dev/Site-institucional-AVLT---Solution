@@ -140,7 +140,7 @@ export function montarEmail(dados: PayloadContato, quando = new Date()): EmailMo
     'Descrição',
     descricao,
     '',
-    '— enviado pelo formulário do site avlt-solution.com',
+    '— enviado pelo formulário do site avltsolution.tech',
   ].join('\n');
 
   // HTML simples e sem dependência de imagem: alguns clientes bloqueiam
@@ -157,7 +157,7 @@ export function montarEmail(dados: PayloadContato, quando = new Date()): EmailMo
   </table>
   <p style="margin:0 0 6px;color:#64748b">Descrição</p>
   <div style="white-space:pre-wrap;border-left:3px solid #00A1E0;padding:2px 0 2px 14px">${escapar(descricao)}</div>
-  <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">Enviado pelo formulário do site avlt-solution.com. Responder este e-mail responde direto para ${escapar(dados.email)}.</p>
+  <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">Enviado pelo formulário do site avltsolution.tech. Responder este e-mail responde direto para ${escapar(dados.email)}.</p>
 </div>`;
 
   return {

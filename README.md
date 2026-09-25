@@ -155,10 +155,12 @@ A separação é deliberada e não deve ser desfeita: **estas empresas não são
 
 Dois canais, mesmos campos, na seção `#contato` da home:
 
-| Canal | Aba | Recebe em |
-|---|---|---|
-| Comercial | Seja nosso cliente | `comercial@avlt-solution.com` |
-| Atendimento | SAC | `contato@avlt-solution.com` |
+| Canal | Aba | Para onde vai | Quem avisa a equipe |
+|---|---|---|---|
+| Comercial | Seja nosso cliente | Lead na org Salesforce (Web-to-Lead) | a própria org, por regra de fluxo ou resposta automática |
+| Atendimento | SAC | e-mail para `contato@avlt-solution.com` | a função do site, pelo Resend |
+
+O canal comercial **não manda e-mail** — o contato nasce como Lead. `comercial@avlt-solution.com` continua aparecendo na página como alternativa para quem prefere escrever direto.
 
 Campos: **Nome completo\***, **Empresa\***, **E-mail\***, **Telefone de contato\*** e Descrição (opcional).
 
@@ -166,15 +168,21 @@ Trocar de aba limpa o formulário de propósito — ninguém envia ao SAC o text
 
 ### Como o envio funciona
 
-O formulário faz `POST` em `/api/contato/`, uma função serverless do próprio projeto (`src/app/api/contato/route.ts`). Ela revalida tudo no servidor e envia pelo **Resend**.
+Cada canal tem a sua entrega, declarada em `entrega` dentro de `src/data/forms.ts`.
 
-Só o campo `canal` viaja do navegador. A caixa de destino e o assunto são decididos no servidor a partir da tabela acima — se o destino viesse do formulário, bastaria editá-lo no navegador para usar o site como relay para qualquer endereço.
+O **comercial** vai por Web-to-Lead direto para a org Salesforce (`src/lib/webToLead.ts`). O endpoint da Salesforce não devolve CORS, então o envio é cego: o pedido sai, mas o navegador não lê a resposta. Quando a tela diz "recebemos seu contato", ela afirma que o pedido saiu, não que o Salesforce aceitou. O porquê e as alternativas estão no topo daquele arquivo.
+
+O **SAC** faz `POST` em `/api/contato/`, uma função serverless do próprio projeto (`src/app/api/contato/route.ts`), que revalida tudo no servidor e envia pelo **Resend**.
+
+Nos dois casos só o campo `canal` viaja do navegador. A caixa de destino e o assunto são decididos no servidor — se o destino viesse do formulário, bastaria editá-lo no navegador para usar o site como relay para qualquer endereço.
 
 Isso é a razão de o projeto **não** usar mais `output: 'export'`: export estático não comporta rota que executa a cada chamada. As páginas continuam todas pré-renderizadas no build (mesmo HTML, mesma performance), mas a hospedagem precisa rodar Node — Vercel, Netlify, Render, um container. Hospedagem de arquivo puro não serve mais enquanto o envio passar por aqui.
 
 ### Configurar (uma vez)
 
-**1. Verificar o domínio no Resend.** Em [resend.com](https://resend.com) → *Domains* → adicionar `avlt-solution.com`. Eles devolvem três registros de DNS (um TXT de SPF, um CNAME/TXT de DKIM e um de DMARC). Publique-os no DNS do domínio e espere a verificação virar *Verified*. Sem isso o envio é recusado — e a mensagem de erro fica no log da função, não na tela do visitante.
+**1. Verificar o domínio de ENVIO no Resend.** Em [resend.com](https://resend.com) → *Domains* → adicionar `send.avltsolution.tech`. Eles devolvem os registros de DNS (um MX e TXT de SPF e DKIM). Publique-os no DNS de `avltsolution.tech` e espere virar *Verified*; depois adicione o DMARC que eles oferecem. Sem isso o envio é recusado — e a mensagem de erro fica no log da função, não na tela do visitante.
+
+Repare que o domínio verificado é o **do site**, não o das caixas. O Resend só checa de onde o e-mail sai; `contato@avlt-solution.com` apenas recebe e não precisa de configuração nenhuma. Verificar o `.com` também funcionaria, mas exigiria mesclar o SPF dele com o do provedor de e-mail atual — dois registros SPF no mesmo nome invalidam os dois e derrubam o e-mail da empresa.
 
 **2. Criar a API key.** Resend → *API Keys* → permissão de envio basta.
 
@@ -183,12 +191,12 @@ Isso é a razão de o projeto **não** usar mais `output: 'export'`: export est�
 | Variável | Obrigatória | Para quê |
 |---|---|---|
 | `RESEND_API_KEY` | sim | A chave do passo 2. |
-| `CONTATO_REMETENTE` | não | Remetente. Padrão: `Site AVLT <site@avlt-solution.com>`. Tem que estar no domínio verificado. |
-| `CONTATO_DESTINO_COMERCIAL` | não | Sobrepõe o destino comercial sem mexer no código — útil para apontar a uma caixa de teste antes de virar a chave. |
-| `CONTATO_DESTINO_SAC` | não | Idem, para o SAC. |
+| `CONTATO_REMETENTE` | não | Remetente. Padrão: `Site AVLT <site@send.avltsolution.tech>`. Tem que estar no domínio verificado no passo 1. |
+| `CONTATO_DESTINO_SAC` | não | Sobrepõe o destino do SAC sem mexer no código — útil para apontar a uma caixa de teste antes de virar a chave. |
+| `CONTATO_DESTINO_COMERCIAL` | não | Existe pela mesma razão, mas hoje não tem efeito: o canal comercial vai por Web-to-Lead e não manda e-mail. |
 | `NEXT_PUBLIC_FORM_ENDPOINT` | não | Definir como string **vazia** desliga o envio e devolve o formulário ao comportamento de abrir o cliente de e-mail. É a chave a virar se o envio precisar ser suspenso às pressas. |
 
-**4. Conferir depois do deploy.** Envie um teste pelos dois canais e veja se chega em `comercial@` e em `contato@`. Se não chegar, o *Logs* da função na Vercel diz o motivo — quase sempre domínio ainda não verificado ou remetente fora dele.
+**4. Conferir depois do deploy.** Envie um teste pelo **SAC** e veja se chega em `contato@`. Se não chegar, o *Logs* da função na Vercel diz o motivo — quase sempre domínio ainda não verificado ou remetente fora dele. O teste do canal comercial é outro: enviar e conferir se o Lead apareceu na org, já que ali o site não manda e-mail.
 
 ### Desenvolver localmente
 
@@ -343,14 +351,14 @@ Salesforce, Agentforce, Data 360, Tableau, MuleSoft e Slack são marcas da Sales
 
 ## Checklist antes de publicar
 
-- [ ] `site.url` atualizado com o domínio real
 - [ ] E-mail e telefone conferidos em `src/data/site.ts`
 - [ ] Placeholders `[INSERIR ...]` resolvidos ou removidos em `projects.ts`
 - [ ] Autorização dos clientes citados nos cases
 - [ ] `og-image.png` revisado
 - [ ] `npm run build` sem erros
-- [ ] Caixas `comercial@` e `contato@` existindo de fato
-- [ ] Domínio verificado no Resend (os três registros de DNS publicados)
+- [ ] CNAME de `www` publicado no DNS de `avltsolution.tech` e domínio válido na Vercel
+- [ ] Caixa `contato@` existindo de fato
+- [ ] `send.avltsolution.tech` verificado no Resend, com DMARC publicado
 - [ ] `RESEND_API_KEY` definida na Vercel
-- [ ] Teste de envio feito pelos dois canais, com o e-mail chegando
-"# Site-institucional-AVLT---Solution" 
+- [ ] Teste do SAC com o e-mail chegando em `contato@`
+- [ ] Teste do comercial com o Lead aparecendo na org, e o alerta da org chegando a quem precisa

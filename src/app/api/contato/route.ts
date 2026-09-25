@@ -25,7 +25,10 @@ import { lerPayload, montarEmail, validarPayload } from '@/lib/contato-email';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const REMETENTE_PADRAO = 'Site AVLT <site@avlt-solution.com>';
+// Subdomínio do domínio DO SITE, não do domínio das caixas de destino.
+// O Resend só verifica de onde o e-mail sai; `comercial@` e `contato@`
+// apenas recebem e não precisam de configuração nenhuma.
+const REMETENTE_PADRAO = 'Site AVLT <site@send.avltsolution.tech>';
 /** Sobreponível só para teste (apontar para um servidor falso local). */
 const RESEND_URL = process.env.RESEND_API_URL?.trim() || 'https://api.resend.com/emails';
 

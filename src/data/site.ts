@@ -8,7 +8,7 @@ export const site = {
   name: 'AVLT - Solution',
   shortName: 'AVLT',
   tagline: 'Salesforce & AI Experts',
-  url: 'https://www.avlt-solution.com',
+  url: 'https://www.avltsolution.tech',
   email: 'administrador@avlt-solution.com',
   phone: '(11) 97125-3393',
   phoneHref: '+5511971253393',

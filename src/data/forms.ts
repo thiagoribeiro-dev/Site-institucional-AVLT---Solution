@@ -92,7 +92,7 @@ export const forms: Record<FormKind, FormConfig> = {
         // Só tem efeito num POST nativo de <form>, que navegaria para cá.
         // O envio deste site é por fetch e não sai da página — deixado
         // preenchido para o caso de alguém trocar o método depois.
-        retURL: 'https://www.avlt-solution.com/obrigado',
+        retURL: 'https://www.avltsolution.tech/obrigado',
       },
     },
   },

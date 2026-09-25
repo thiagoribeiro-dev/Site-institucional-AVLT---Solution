@@ -91,7 +91,7 @@ export default function ContactForm({ config }: { config: FormConfig }) {
       campos.descricao.trim() || '(não informada)',
       '',
       '---',
-      `Enviado pelo formulário "${config.title}" do site avlt-solution.com`,
+      `Enviado pelo formulário "${config.title}" do site avltsolution.tech`,
     ].join('\n');
 
   async function enviar(e: React.FormEvent) {
