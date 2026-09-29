@@ -35,6 +35,17 @@ export default function GoogleAnalytics() {
     return () => window.removeEventListener(EVENTO_CONSENTIMENTO, aoMudar);
   }, []);
 
+  // Diagnóstico: sem ID nada aparece — nem GA, nem banner — e o silêncio
+  // é indistinguível de "quebrou". Avisa no console, só em desenvolvimento.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || GA_ID) return;
+    console.info(
+      '[AVLT] NEXT_PUBLIC_GA_ID vazio: o Google Analytics e o aviso de cookies ' +
+        'não são renderizados. É o comportamento esperado em desenvolvimento. ' +
+        'Para exercitar o banner localmente, defina a variável no .env.local.',
+    );
+  }, []);
+
   // Navegação entre páginas no App Router não recarrega o documento,
   // então a visualização de página precisa ser enviada na mão.
   useEffect(() => {
