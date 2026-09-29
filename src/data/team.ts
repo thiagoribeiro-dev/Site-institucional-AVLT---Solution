@@ -33,13 +33,13 @@ export const team = [
   {
     name: 'Leandro Palma',
     role: 'Governança & DevOps',
-    bio: 'Solution Architect com 9+ anos de plataforma. Escreveu o primeiro Governance Handbook da WeeNow: padrão de API, metadado e Git.',
+    bio: 'Solution Architect com 9+ anos de plataforma. Escreveu o Governance Handbook para implementar CoE em clientes: padrão de API, metadado e Git. Salesforce Platform Data Architect.',
     tags: ['Governança', 'DevOps', 'APIs', 'Metadado'],
   },
   {
     name: 'Thiago Ribeiro Silva',
     role: 'IA aplicada a CRM',
-    bio: 'Fundador da TRS Tech Solutions. Einstein e Agentforce em vendas e atendimento. Apex, LWC e integrações. Pós em IA no IBMEC.',
+    bio: 'Co-fundador e CTO da AVLT, fundador da TRS Tech Solutions. Arquitetura de soluções corporativas no ecossistema Salesforce — Apex, LWC e integrações complexas — com automação e IA aplicada, de Einstein a Agentforce. Pós-graduado em Inteligência Artificial e em Computação Quântica.',
     tags: ['Agentforce', 'Einstein', 'Apex', 'LWC'],
   },
   {
